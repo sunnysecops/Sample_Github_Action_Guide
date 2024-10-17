@@ -26,7 +26,7 @@ jobs:
           --subnet-id subnet-00a51e4c2e5e91b2f \
           --security-group-ids sg-04593b19a4334cfa6 \
           --key-name testKey \
-          --associate-public-ip-address
+          --associate-public-ip-address \
           --query 'Instances[0].InstanceId' \
           --output text)
         echo "INSTANCE_ID=$INSTANCE_ID" >> $GITHUB_ENV
