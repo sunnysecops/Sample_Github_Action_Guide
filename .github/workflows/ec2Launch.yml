@@ -62,12 +62,13 @@ jobs:
 
     - name: Run script on EC2 instance via SSH
       run: |
-        ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ec2-user@${{ env.PUBLIC_IP }} << 'EOF'
+        ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ubuntu@${{ env.PUBLIC_IP }} << 'EOF'
         # Your script goes here. Replace the echo with actual commands.
         echo "Running your script on the EC2 instance"
         # Example script:
-        sudo yum update -y
-        sudo yum install -y httpd
+        sudo apt update -y
+        sudo apt-get update -y
+        sudo apt-get install -y httpd
         sudo systemctl start httpd
         EOF
 
