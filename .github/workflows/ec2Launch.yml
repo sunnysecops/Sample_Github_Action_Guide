@@ -52,7 +52,7 @@ jobs:
       run: |
         echo "Waiting for SSH to become available..."
         for i in {1..15}; do
-          if ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ec2-user@${{ env.PUBLIC_IP }} "echo SSH ready"; then
+          if ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ubuntu@${{ env.PUBLIC_IP }} "echo SSH ready"; then
             break
           else
             echo "SSH not ready, retrying in 10 seconds..."
