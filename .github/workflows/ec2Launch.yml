@@ -21,11 +21,11 @@ jobs:
       id: launch_ec2
       run: |
         INSTANCE_ID=$(aws ec2 run-instances \
-          --image-id ami-0ea3c35c5c3284d82  # Replace with your AMI ID
+          --image-id ami-0ea3c35c5c3284d82 \
           --instance-type t2.micro \
-          --subnet-id subnet-00a51e4c2e5e91b2f  # Replace with your VPC's subnet ID
-          --security-group-ids sg-04593b19a4334cfa6  # Replace with your security group ID
-          --key-name testKey  # Replace with your key pair name
+          --subnet-id subnet-00a51e4c2e5e91b2f \
+          --security-group-ids sg-04593b19a4334cfa6 \
+          --key-name testKey \
           --query 'Instances[0].InstanceId' \
           --output text)
         echo "INSTANCE_ID=$INSTANCE_ID" >> $GITHUB_ENV
