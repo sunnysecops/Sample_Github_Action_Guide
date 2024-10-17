@@ -1,0 +1,76 @@
+name: Launch EC2, Run Script via SSH, and Terminate
+on:
+  workflow_dispatch:  # Allows manual triggering of the workflow
+
+jobs:
+  launch-run-terminate:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up AWS CLI
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: 'us-east-1'  # Change this to your preferred region
+
+    - name: Launch EC2 instance
+      id: launch_ec2
+      run: |
+        INSTANCE_ID=$(aws ec2 run-instances \
+          --image-id ami-0ea3c35c5c3284d82 \  # Replace with your AMI ID
+          --instance-type t2.micro \
+          --subnet-id subnet-00a51e4c2e5e91b2f \  # Replace with your VPC's subnet ID
+          --security-group-ids sg-04593b19a4334cfa6 \  # Replace with your security group ID
+          --key-name testKey \  # Replace with your key pair name
+          --query 'Instances[0].InstanceId' \
+          --output text)
+        echo "INSTANCE_ID=$INSTANCE_ID" >> $GITHUB_ENV
+
+    - name: Wait for EC2 instance to be in running state
+      run: |
+        aws ec2 wait instance-running --instance-ids ${{ env.INSTANCE_ID }}
+
+    - name: Get EC2 instance public IP
+      run: |
+        PUBLIC_IP=$(aws ec2 describe-instances \
+          --instance-ids ${{ env.INSTANCE_ID }} \
+          --query 'Reservations[0].Instances[0].PublicIpAddress' \
+          --output text)
+        echo "PUBLIC_IP=$PUBLIC_IP" >> $GITHUB_ENV
+
+    - name: Add SSH key to SSH agent
+      uses: webfactory/ssh-agent@v0.7.0
+      with:
+        ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
+
+    - name: Wait for SSH availability
+      run: |
+        echo "Waiting for SSH to become available..."
+        for i in {1..15}; do
+          if ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ec2-user@${{ env.PUBLIC_IP }} "echo SSH ready"; then
+            break
+          else
+            echo "SSH not ready, retrying in 10 seconds..."
+            sleep 10
+          fi
+        done
+
+    - name: Run script on EC2 instance via SSH
+      run: |
+        ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ec2-user@${{ env.PUBLIC_IP }} << 'EOF'
+        # Your script goes here. Replace the echo with actual commands.
+        echo "Running your script on the EC2 instance"
+        # Example script:
+        sudo yum update -y
+        sudo yum install -y httpd
+        sudo systemctl start httpd
+        EOF
+
+    - name: Terminate EC2 instance
+      run: |
+        aws ec2 terminate-instances --instance-ids ${{ env.INSTANCE_ID }}
+        aws ec2 wait instance-terminated --instance-ids ${{ env.INSTANCE_ID }}
