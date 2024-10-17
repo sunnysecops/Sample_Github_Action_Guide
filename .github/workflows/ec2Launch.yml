@@ -68,8 +68,9 @@ jobs:
         # Example script:
         sudo apt update -y
         sudo apt-get update -y
-        sudo apt-get install -y httpd
-        sudo systemctl start httpd
+        sudo apt-get install -y nginx
+        sudo systemctl start nginx
+        curl localhost:8080
         EOF
 
     - name: Terminate EC2 instance
